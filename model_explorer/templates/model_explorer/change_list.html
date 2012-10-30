@@ -1,0 +1,7 @@
+{% extends "admin/change_list.html" %}
+{% load i18n model_explorer %}
+{% block pretitle %}
+  <div id="model-explorer-bar">
+      {% block chart_form %}{% chart_form cl %}{% endblock %}
+  </div>
+{% endblock %}

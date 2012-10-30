@@ -1,0 +1,15 @@
+{% load i18n admin_static %}
+{% load url from future %}
+{% load admin_urls %}
+{% if cl.chart_form %}
+<div id="chartbar"><form id="chart-params" action="{% url cl.opts|admin_urlname:'chart' %}" method="get">
+<div><!-- DIV needed for valid HTML -->
+<label for="chartbar">Chart</label>
+{{ cl.chart_form }}
+{% for pair in cl.params.items %}
+    {% ifnotequal pair.0 "chart_row" %}{% ifnotequal pair.0 "chart_col" %}<input type="hidden" name="{{ pair.0 }}" value="{{ pair.1 }}"/>{% endifnotequal %}{% endifnotequal %}
+{% endfor %}
+<input type="submit" value="{% trans 'Chart' %}" />
+</div>
+</form></div>
+{% endif %}
