@@ -27,10 +27,10 @@ class ExplorerList(ChangeList):
 
     def __init__(self, request, *args, **kwargs):
         get = request.GET.copy()
-        self.chart_row = get.pop('chart_row', None)
-        self.chart_col = get.pop('chart_col', None)
-        self.chart_var = get.pop('chart_var', None)
-        self.chart_measure = get.pop('chart_measure', None)
+        self.chart_row = get.pop('chart_row', [None])[0]
+        self.chart_col = get.pop('chart_col', [None])[0]
+        self.chart_var = get.pop('chart_var', [None])[0]
+        self.chart_measure = get.pop('chart_measure', [None])[0]
         request.GET = get
         ChangeList.__init__(self, request, *args, **kwargs)
 
@@ -102,9 +102,58 @@ class ModelAdmin(admin.ModelAdmin):
         The 'chart' admin view for this model.
         """
         response = self.changelist_view(request, extra_context)
+
+        explorer_list = response.context_data['cl']
+
+        from chartit import DataPool, Chart
+
+#        chart_row = explorer_list.chart_row
+#        chart_col = explorer_list.chart_col
+#        chart_var = explorer_list.chart_var
+#        chart_measure = explorer_list.chart_measure
+        data = \
+            DataPool(
+               series=
+                [{'options': {
+                   'source': explorer_list.query_set},
+                  'terms': [
+                    explorer_list.chart_row,
+                    explorer_list.chart_col,
+                  ]
+                 }
+                 ])
+
+        title = '%s of %s for %s' % (explorer_list.chart_measure, explorer_list.chart_var, explorer_list.model._meta.verbose_name)
+
+        cht = Chart(
+                datasource = data,
+                series_options =
+                  [{'options':{
+                      'type': 'line',
+                      'stacking': False},
+                    'terms':{
+                      explorer_list.chart_row: [
+                        explorer_list.chart_col]
+                      }}],
+                chart_options =
+                  {
+#                   'title': {
+#                       'text': title},
+#                   'xAxis': {
+#                        'title': {
+#                           'text': 'Month number'}
+#                    }
+                   })
+
+        response.context_data.update({'chart': cht})
+        response.context_data['title'] = title
         response.template_name = self.chart_template or [
             'model_explorer/%s/%s/chart.html' % (response.context_data['app_label'], response.context_data['cl'].model._meta.object_name.lower()),
             'model_explorer/%s/chart.html' % response.context_data['app_label'],
             'model_explorer/chart.html'
         ]
         return response
+
+    class Media:
+        js = ("js/jquery-1.7.min.js",
+              "js/highcharts.src.js",)
